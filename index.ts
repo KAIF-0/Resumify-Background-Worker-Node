@@ -1,17 +1,9 @@
-import { serve } from "bun";
+import { Hono } from "hono";
 
-const server = serve({
+const app = new Hono();
+app.get("/", (c) => c.text("Hello Bun!"));
+
+export default {
   port: 8000,
-  async fetch(request) {
-    const { pathname } = new URL(request.url);
-
-    return new Response("Hello Dummy deployment!", {
-      status: 200,
-    });
-  },
-  error(error: Error) {
-    return new Response("Something Went Wrong: " + error.message, {
-      status: 500,
-    });
-  },
-});
+  fetch: app.fetch,
+};

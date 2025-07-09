@@ -4,12 +4,15 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start" : "bun --watch run index.ts"
+    "start": "bun --watch run index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "hono": "^4.8.4"
   }
 }
