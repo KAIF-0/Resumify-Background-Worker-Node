@@ -1,9 +1,12 @@
-import { Hono } from "hono";
+import express from "express";
 
-const app = new Hono();
-app.get("/", (c) => c.text("Hello Bun!"));
+const app = express();
+const PORT = 8000;
 
-export default {
-  port: 8000,
-  fetch: app.fetch,
-};
+app.get("/", (req, res) => {
+  res.send("🚀 Hello from TypeScript + Express");
+});
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});
