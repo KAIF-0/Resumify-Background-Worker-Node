@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon index.ts" 
+    "start": "npx nodemon index.ts"
   },
   "repository": {
     "type": "git",
@@ -20,14 +20,13 @@
   },
   "homepage": "https://github.com/KAIF-0/Resumify-Background-Worker-Node#readme",
   "dependencies": {
-    "@hono/node-server": "^1.15.0",
     "@langchain/community": "^0.3.48",
     "@langchain/core": "^0.3.62",
     "@langchain/google-genai": "^0.2.14",
     "@prisma/client": "^6.11.1",
     "bullmq": "^5.56.2",
     "dotenv": "^16.4.5",
-    "hono": "^4.8.4",
+    "express": "^5.1.0",
     "pdf-parse": "^1.1.1"
   },
   "devDependencies": {

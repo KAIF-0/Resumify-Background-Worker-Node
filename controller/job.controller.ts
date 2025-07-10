@@ -1,11 +1,9 @@
-import { HTTPException } from "hono/http-exception";
 import { processQueue } from "../config/redis.queue";
-import { Context } from "hono";
+import { Request, Response } from "express";
 
-
-export const handleAddJob = async (c: Context) => {
+export const handleAddJob = async (req: Request, res: Response) => {
   try {
-    const { portfolioId, key } = await c.req.json();
+    const { portfolioId, key } = await req.body;
 
     console.log(portfolioId, key);
 
@@ -27,19 +25,21 @@ export const handleAddJob = async (c: Context) => {
       console.log("Job already exists!");
     }
 
-    return c.json({
+    return res.json({
       success: true,
       message: "Job added successfully!",
     });
   } catch (error) {
     console.log(error);
     if (error instanceof Error) {
-      throw new HTTPException(500, {
+      return res.json({
+        success: false,
         message: error.message,
       });
     } else {
-      throw new HTTPException(500, {
-        message: "Failed to add resume processing Job!",
+      return res.json({
+        success: true,
+        message: "Failed to add Job!",
       });
     }
   }
