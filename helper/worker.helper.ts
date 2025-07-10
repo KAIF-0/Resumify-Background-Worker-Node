@@ -180,7 +180,7 @@ function cleanPortfolioData(data: any) {
 
 export const handleProcessingFail = async (portfolioId: string) => {
   try {
-    console.log(portfolioId, PortStatus.ERROR);
+    if (!portfolioId) return;
     await prisma.portfolio.update({
       where: {
         id: portfolioId,
@@ -202,10 +202,11 @@ const portfolioData = {
   summary:
     "Creative and detail-oriented developer with 5+ years of experience in building scalable web applications.",
   email: "john.doe@example.com",
+  github: "https://github.com/johndoe",
+  linkedIn: "https://www.linkedin.com/in/kaif-khan-47bb19292",
   phone: "+1 123 456 7890",
   location: "San Francisco, CA",
   softSkills: ["Teamwork", "Problem Solving", "Communication"],
-
   experience: {
     create: [
       {
@@ -226,7 +227,6 @@ const portfolioData = {
       },
     ],
   },
-
   projects: {
     create: [
       {
@@ -246,7 +246,6 @@ const portfolioData = {
       },
     ],
   },
-
   skills: {
     create: [
       {
@@ -259,7 +258,6 @@ const portfolioData = {
       },
     ],
   },
-
   education: {
     create: [
       {

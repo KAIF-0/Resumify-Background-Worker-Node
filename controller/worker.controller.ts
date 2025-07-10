@@ -33,6 +33,8 @@ export const worker = new Worker(
   }
 );
 
+
+
 worker.on("completed", async (job) => {
   try {
     const { portfolioId, key, resumeUrl } = job.data;
@@ -49,8 +51,6 @@ worker.on("completed", async (job) => {
 
 worker.on("failed", async (job, err) => {
   const { portfolioId, resumeUrl } = job?.data;
-
-  if (!portfolioId) return;
 
   //cleanup
   await Promise.all([

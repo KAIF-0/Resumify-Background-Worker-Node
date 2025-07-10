@@ -13,11 +13,13 @@ export interface Portfolio {
 export interface PortfolioData {
   name: string;
   title: string;
-  summary: string;
+  summary?: string;
   email?: string;
   phone?: string;
   location?: string;
   photo?: string;
+  github?: string;
+  linkedIn?: string;
   experience: Experience[];
   projects: Project[];
   skillCategories: SkillCategory[];

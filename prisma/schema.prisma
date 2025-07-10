@@ -33,6 +33,8 @@ model PortfolioData {
   photo      String?
   summary    String?
   email      String?
+  linkedIn   String?
+  github     String?
   phone      String?
   location   String?
   softSkills String[]
