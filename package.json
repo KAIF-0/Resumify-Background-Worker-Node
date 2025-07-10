@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx nodemon index.ts"
+    "start": "npx nodemon index.ts",
+    "postinstall": "npm install --legacy-peer-deps"
   },
   "repository": {
     "type": "git",
@@ -26,7 +27,7 @@
     "@langchain/google-genai": "^0.2.14",
     "@prisma/client": "^6.11.1",
     "bullmq": "^5.56.2",
-    "dotenv": "^17.2.0",
+    "dotenv": "^16.4.5",
     "hono": "^4.8.4",
     "pdf-parse": "^1.1.1"
   },
