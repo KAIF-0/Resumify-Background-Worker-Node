@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PortStatus {
+  READY
+  PROCESSING
+  ERROR
+}
+
+model Portfolio {
+  id            String        @id @default(uuid())
+  status        PortStatus
+  portfolioData PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  portfolioId   String        @unique
+}
+
+model PortfolioData {
+  id         String          @id @default(uuid())
+  name       String
+  title      String?
+  photo      String?
+  summary    String?
+  email      String?
+  phone      String?
+  location   String?
+  softSkills String[]
+  experience Experience[]
+  projects   Project[]
+  skills     SkillCategory[]
+  education  Education[]
+  portfolio  Portfolio?
+}
+
+model Experience {
+  id          String        @id @default(uuid())
+  company     String
+  role        String
+  startDate   String?
+  endDate     String?
+  description String
+  portfolio   PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  portfolioId String
+}
+
+model Project {
+  id           String        @id @default(uuid())
+  name         String
+  description  String
+  technologies String[]
+  link         String?
+  github       String?
+  portfolio    PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  portfolioId  String
+}
+
+model Education {
+  id          String        @id @default(uuid())
+  institution String
+  degree      String
+  year        String
+  portfolio   PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  portfolioId String
+}
+
+model SkillCategory {
+  id              String         @id @default(uuid())
+  name            String         @default("Skills")
+  skills          String[]
+  PortfolioData   PortfolioData? @relation(fields: [portfolioDataId], references: [id], onDelete: Cascade)
+  portfolioDataId String?
+}
