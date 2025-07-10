@@ -23,7 +23,7 @@ app.notFound((c) => {
   return c.text("Page not found!", 404);
 });
 
-export default app.fetch;
+export default app
 
 // serve({
 //   port: 8000,
