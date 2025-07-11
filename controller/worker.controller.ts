@@ -52,6 +52,13 @@ worker.on("failed", async (job: Job | undefined, err: Error) => {
     console.error("Job is undefined in failed handler");
     return;
   }
+  const totalRetries = job?.opts.attempts ?? 1;
+  const attemptsMade = job?.attemptsMade ?? 0;
+  const retriesLeft = totalRetries - attemptsMade;
+  if (retriesLeft > 0) {
+    console.log(`Job ${job.id} failed but will be retried. Attempts made: ${attemptsMade}`);
+    return;
+  }
   const { portfolioId, resumeUrl } = job?.data;
 
   //cleanup
