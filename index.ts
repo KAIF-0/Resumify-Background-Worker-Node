@@ -9,9 +9,8 @@ const app = new Hono();
 app.use(logger());
 app.get("/", (c: Context) => c.text("Hello from Resumify worker node!"));
 
-app.post("/fetch", async (c: Context) => {
-  const data = await c.req.json();
-  return c.json({ success: true }, 200);
+app.get("/fetch", async (c: Context) => {
+  return c.text("Hello from Resumify worker node!", 200);
 });
 
 app.post("/api/addJob", handleAddJob);
