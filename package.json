@@ -27,8 +27,8 @@
     "@langchain/core": "^0.3.62",
     "@langchain/google-genai": "^0.2.14",
     "@prisma/client": "^6.11.1",
-    "bullmq": "^5.56.2",
-    "dotenv": "^16.4.5",
+    "bullmq": "^5.56.3",
+    "dotenv": "^16.6.1",
     "hono": "^4.8.4",
     "pdf-parse": "^1.1.1"
   },

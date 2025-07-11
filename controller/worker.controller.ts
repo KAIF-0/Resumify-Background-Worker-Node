@@ -1,4 +1,4 @@
-import { Worker } from "bullmq";
+import { Job, Worker } from "bullmq";
 import { config } from "dotenv";
 import {
   deleteResume,
@@ -11,7 +11,7 @@ config();
 
 export const worker = new Worker(
   "processQueue",
-  async (job) => {
+  async (job: Job) => {
     const { portfolioId, key, resumeUrl } = job.data;
 
     try {
@@ -33,9 +33,7 @@ export const worker = new Worker(
   }
 );
 
-
-
-worker.on("completed", async (job) => {
+worker.on("completed", async (job: Job) => {
   try {
     const { portfolioId, key, resumeUrl } = job.data;
     await updatePortfolioStatus(portfolioId);
@@ -49,7 +47,11 @@ worker.on("completed", async (job) => {
   }
 });
 
-worker.on("failed", async (job, err) => {
+worker.on("failed", async (job: Job | undefined, err: Error) => {
+  if (!job) {
+    console.error("Job is undefined in failed handler");
+    return;
+  }
   const { portfolioId, resumeUrl } = job?.data;
 
   //cleanup

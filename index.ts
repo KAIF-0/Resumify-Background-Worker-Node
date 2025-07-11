@@ -3,11 +3,11 @@ import { Context, Hono } from "hono";
 import { handleAddJob } from "./controller/job.controller";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
-import "./controller/worker.controller"; 
+import "./controller/worker.controller";
 
 const app = new Hono();
 app.use(logger());
-app.get("/", (c) => c.text("Hello from Resumify worker node!"));
+app.get("/", (c: Context) => c.text("Hello from Resumify worker node!"));
 
 app.post("/fetch", async (c: Context) => {
   const data = await c.req.json();
@@ -16,7 +16,7 @@ app.post("/fetch", async (c: Context) => {
 
 app.post("/api/addJob", handleAddJob);
 
-app.onError((err, c) => {
+app.onError((err: Error, c: Context) => {
   console.error(err.message);
   if (err instanceof HTTPException) {
     return c.json({ success: false, message: err.getResponse() });
@@ -24,7 +24,7 @@ app.onError((err, c) => {
   return c.json({ success: false, message: "Internal Server Error!" }, 500);
 });
 
-app.notFound((c) => {
+app.notFound((c: Context) => {
   return c.text("Page not found!", 404);
 });
 
