@@ -27,22 +27,23 @@ model Portfolio {
 }
 
 model PortfolioData {
-  id         String          @id @default(uuid())
-  name       String
-  title      String?
-  photo      String?
-  summary    String?
-  email      String?
-  linkedIn   String?
-  github     String?
-  phone      String?
-  location   String?
-  softSkills String[]
-  experience Experience[]
-  projects   Project[]
-  skills     SkillCategory[]
-  education  Education[]
-  portfolio  Portfolio?
+  id           String          @id @default(uuid())
+  name         String
+  title        String?
+  photo        String?
+  summary      String?
+  email        String?
+  linkedIn     String?
+  github       String?
+  phone        String?
+  location     String?
+  softSkills   String[]
+  achievements String[]
+  experience   Experience[]
+  projects     Project[]
+  skills       SkillCategory[]
+  education    Education[]
+  portfolio    Portfolio?
 }
 
 model Experience {

@@ -3,7 +3,7 @@ import { Context, Hono } from "hono";
 import { handleAddJob } from "./controller/job.controller";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
-import "./controller/worker.controller";
+import "./controller/worker.controller"; 
 
 const app = new Hono();
 app.use(logger());

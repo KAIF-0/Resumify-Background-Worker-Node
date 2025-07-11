@@ -142,7 +142,7 @@ function cleanPortfolioData(data: any) {
 
   if (parsed === null) throw new Error("Not a resume!");
 
-  console.log("Parsed: ", parsed);
+  // console.log("Parsed: ", parsed);
 
   const fixNullsAndLinks = (value: any, key: string) => {
     if (value === "null") return null;
@@ -207,6 +207,10 @@ const portfolioData = {
   phone: "+1 123 456 7890",
   location: "San Francisco, CA",
   softSkills: ["Teamwork", "Problem Solving", "Communication"],
+  achievements: [
+    "Complete Full Stack Web Developemnt from Physics Wallah",
+    "Organized, Volunteered and Participated in 3+ Hackathon",
+  ],
   experience: {
     create: [
       {

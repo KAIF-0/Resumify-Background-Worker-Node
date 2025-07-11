@@ -20,10 +20,11 @@ export interface PortfolioData {
   photo?: string;
   github?: string;
   linkedIn?: string;
+  softSkills: string[];
+  achievements: string[];
   experience: Experience[];
   projects: Project[];
   skillCategories: SkillCategory[];
-  softSkills: string[];
   education: Education[];
 }
 
