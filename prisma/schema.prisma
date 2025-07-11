@@ -28,7 +28,7 @@ model Portfolio {
 
 model PortfolioData {
   id           String          @id @default(uuid())
-  name         String
+  name         String?
   title        String?
   photo        String?
   summary      String?
@@ -48,19 +48,19 @@ model PortfolioData {
 
 model Experience {
   id          String        @id @default(uuid())
-  company     String
-  role        String
+  company     String?
+  role        String?
   startDate   String?
   endDate     String?
-  description String
+  description String?
   portfolio   PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   portfolioId String
 }
 
 model Project {
   id           String        @id @default(uuid())
-  name         String
-  description  String
+  name         String?
+  description  String?
   technologies String[]
   link         String?
   github       String?
@@ -70,9 +70,9 @@ model Project {
 
 model Education {
   id          String        @id @default(uuid())
-  institution String
-  degree      String
-  year        String
+  institution String?
+  degree      String?
+  year        String?
   portfolio   PortfolioData @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
   portfolioId String
 }

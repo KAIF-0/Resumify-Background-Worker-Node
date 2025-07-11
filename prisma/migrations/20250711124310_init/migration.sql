@@ -1,0 +1,16 @@
+-- AlterTable
+ALTER TABLE "Education" ALTER COLUMN "institution" DROP NOT NULL,
+ALTER COLUMN "degree" DROP NOT NULL,
+ALTER COLUMN "year" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "Experience" ALTER COLUMN "company" DROP NOT NULL,
+ALTER COLUMN "role" DROP NOT NULL,
+ALTER COLUMN "description" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "PortfolioData" ALTER COLUMN "name" DROP NOT NULL;
+
+-- AlterTable
+ALTER TABLE "Project" ALTER COLUMN "name" DROP NOT NULL,
+ALTER COLUMN "description" DROP NOT NULL;
