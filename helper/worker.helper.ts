@@ -73,7 +73,8 @@ async function generateData(resumeData: string) {
 
 If the input is not a resume (e.g., a blog post, essay, or random notes), respond with: "null"
 
-If any field is missing, set its value to "null". For arrays or objects, set them as "[]" or " create: [] " accordingly.
+If any field is missing, set its value to "null". For arrays, set them to empty arrays (e.g., []). For nested relational fields like experience, projects, skills, and education, use create: [] in curly brackets only at the top level (not inside each item).
+
 
 🧾 Format:
 
