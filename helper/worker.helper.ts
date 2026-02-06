@@ -82,7 +82,7 @@ Resume Text:
 {resumeData}
 `); 
 
- const structuredModel = model.withStructuredOutput(PortfolioSchema)
+  const structuredModel = model.withStructuredOutput(PortfolioSchema as any)
 
   const chain = RunnableSequence.from([prompt, structuredModel]);
 
@@ -91,7 +91,7 @@ Resume Text:
   });
   // console.log("Structured Response: ", response);
   // response is already a JS object
-  return response;
+  return response as PortfolioData;
 }
 
 

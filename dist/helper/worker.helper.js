@@ -97,7 +97,7 @@ Resume Text:
         const response = yield chain.invoke({
             resumeData,
         });
-        console.log("Structured Response: ", response);
+        // console.log("Structured Response: ", response);
         // response is already a JS object
         return response;
     });
