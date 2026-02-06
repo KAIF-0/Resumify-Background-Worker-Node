@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.handleProcessingFail = exports.handleProcessingResume = exports.updatePortfolioStatus = exports.insertProfileData = void 0;
+exports.PortfolioSchema = exports.handleProcessingFail = exports.handleProcessingResume = exports.updatePortfolioStatus = exports.insertProfileData = void 0;
 exports.deleteResume = deleteResume;
 const client_1 = require("@prisma/client");
 const prism_config_1 = require("../config/prism.config");
@@ -22,6 +22,7 @@ const pdf_1 = require("@langchain/community/document_loaders/fs/pdf");
 const prompts_1 = require("@langchain/core/prompts");
 const runnables_1 = require("@langchain/core/runnables");
 const gemini_config_1 = require("../config/gemini.config");
+const zod_1 = require("zod");
 const insertProfileData = (portfolioData, portfolioId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield prism_config_1.prisma.portfolioData.create({
@@ -80,30 +81,25 @@ exports.handleProcessingResume = handleProcessingResume;
 function generateData(resumeData) {
     return __awaiter(this, void 0, void 0, function* () {
         const prompt = prompts_1.PromptTemplate.fromTemplate(`
-    You are an intelligent parser that extracts structured portfolio information from resume text. The input will be the full extracted text from a resume (in plain text). Your goal is to return a valid JavaScript object named "portfolioData" with the following structure.
+You are an intelligent resume parser.
 
-If the input is not a resume (e.g., a blog post, essay, or random notes), respond with: "null"
+Rules:
+- If input is NOT a resume, return null
+- Missing fields → null
+- Arrays → []
+- Use "create: []" only at top-level relations
 
-If any field is missing, set its value to "null". For arrays or objects, set them as "[]" or " create: [] " accordingly.
-
-🧾 Format:
-
-portfolioData = {portfolioData}
-
-INPUT TEXT: {resumeData}
-
-Now output should be only in portfolioData JSON object format.
- 
-    `);
-        const chain = runnables_1.RunnableSequence.from([prompt, gemini_config_1.model]);
-        const response = (yield chain.invoke({
+Resume Text:
+{resumeData}
+`);
+        const structuredModel = gemini_config_1.model.withStructuredOutput(exports.PortfolioSchema);
+        const chain = runnables_1.RunnableSequence.from([prompt, structuredModel]);
+        const response = yield chain.invoke({
             resumeData,
-            portfolioData,
-        })).text;
-        // console.log(response);
-        //cleaning unstructured data
-        const cleanedData = cleanPortfolioData(response);
-        return cleanedData;
+        });
+        console.log("Structured Response: ", response);
+        // response is already a JS object
+        return response;
     });
 }
 function downloadResume(resumeUrl, localPath) {
@@ -197,76 +193,47 @@ const handleProcessingFail = (portfolioId) => __awaiter(void 0, void 0, void 0, 
     }
 });
 exports.handleProcessingFail = handleProcessingFail;
-const portfolioData = {
-    name: "John Doe",
-    title: "Full Stack Developer",
-    photo: "https://example.com/photo.jpg",
-    summary: "Creative and detail-oriented developer with 5+ years of experience in building scalable web applications.",
-    email: "john.doe@example.com",
-    github: "https://github.com/johndoe",
-    linkedIn: "https://www.linkedin.com/in/kaif-khan-47bb19292",
-    phone: "+1 123 456 7890",
-    location: "San Francisco, CA",
-    softSkills: ["Teamwork", "Problem Solving", "Communication"],
-    achievements: [
-        "Complete Full Stack Web Developemnt from Physics Wallah",
-        "Organized, Volunteered and Participated in 3+ Hackathon",
-    ],
-    experience: {
-        create: [
-            {
-                company: "Google",
-                role: "Software Engineer",
-                startDate: "2019-01-01",
-                endDate: "2022-12-31",
-                description: "Worked on scalable systems and internal tools for Google Cloud Platform.",
-            },
-            {
-                company: "StartupX",
-                role: "Frontend Developer",
-                startDate: "2017-06-01",
-                endDate: "2018-12-31",
-                description: "Built and maintained responsive user interfaces using React.",
-            },
-        ],
-    },
-    projects: {
-        create: [
-            {
-                name: "AI Chatbot",
-                description: "A GPT-powered customer support chatbot integrated into websites.",
-                technologies: ["React", "Node.js", "OpenAI API"],
-                link: "https://aichatbot.example.com",
-                github: "https://github.com/johndoe/aichatbot",
-            },
-            {
-                name: "Portfolio Generator",
-                description: "App to generate developer portfolios from resumes.",
-                technologies: ["Next.js", "Tailwind", "Prisma"],
-                link: "https://portfolio-gen.example.com",
-                github: "https://github.com/johndoe/portfolio-gen",
-            },
-        ],
-    },
-    skills: {
-        create: [
-            {
-                name: "Frontend",
-                skills: ["React", "Next.js", "Tailwind CSS", "Framer Motion"],
-            },
-            {
-                name: "Backend",
-                skills: ["Node.js", "Express", "Prisma", "PostgreSQL"],
-            },
-        ],
-    },
-    education: {
-        create: [
-            {
-                institution: "MIT",
-                degree: "B.Tech in Computer Science",
-                year: "2017",
-            },
-        ],
-    },
-};
+exports.PortfolioSchema = zod_1.z.object({
+    name: zod_1.z.string().nullable(),
+    title: zod_1.z.string().nullable(),
+    photo: zod_1.z.string().url().nullable(),
+    summary: zod_1.z.string().nullable(),
+    email: zod_1.z.string().email().nullable(),
+    github: zod_1.z.string().url().nullable(),
+    linkedIn: zod_1.z.string().url().nullable(),
+    phone: zod_1.z.string().nullable(),
+    location: zod_1.z.string().nullable(),
+    softSkills: zod_1.z.array(zod_1.z.string()),
+    achievements: zod_1.z.array(zod_1.z.string()),
+    experience: zod_1.z.object({
+        create: zod_1.z.array(zod_1.z.object({
+            company: zod_1.z.string().nullable(),
+            role: zod_1.z.string().nullable(),
+            startDate: zod_1.z.string().nullable(),
+            endDate: zod_1.z.string().nullable(),
+            description: zod_1.z.string().nullable(),
+        })),
+    }),
+    projects: zod_1.z.object({
+        create: zod_1.z.array(zod_1.z.object({
+            name: zod_1.z.string().nullable(),
+            description: zod_1.z.string().nullable(),
+            technologies: zod_1.z.array(zod_1.z.string()),
+            link: zod_1.z.string().url().nullable(),
+            github: zod_1.z.string().url().nullable(),
+        })),
+    }),
+    skills: zod_1.z.object({
+        create: zod_1.z.array(zod_1.z.object({
+            name: zod_1.z.string().nullable(),
+            skills: zod_1.z.array(zod_1.z.string()),
+        })),
+    }),
+    education: zod_1.z.object({
+        create: zod_1.z.array(zod_1.z.object({
+            institution: zod_1.z.string().nullable(),
+            degree: zod_1.z.string().nullable(),
+            year: zod_1.z.string().nullable(),
+        })),
+    }),
+});

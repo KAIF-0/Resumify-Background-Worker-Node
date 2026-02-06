@@ -18,9 +18,8 @@ require("./controller/worker.controller");
 const app = new hono_1.Hono();
 app.use((0, logger_1.logger)());
 app.get("/", (c) => c.text("Hello from Resumify worker node!"));
-app.post("/fetch", (c) => __awaiter(void 0, void 0, void 0, function* () {
-    const data = yield c.req.json();
-    return c.json({ success: true }, 200);
+app.get("/fetch", (c) => __awaiter(void 0, void 0, void 0, function* () {
+    return c.text("Hello from Resumify worker node!", 200);
 }));
 app.post("/api/addJob", job_controller_1.handleAddJob);
 app.onError((err, c) => {

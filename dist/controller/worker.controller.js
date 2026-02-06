@@ -47,6 +47,18 @@ exports.worker.on("completed", (job) => __awaiter(void 0, void 0, void 0, functi
     }
 }));
 exports.worker.on("failed", (job, err) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    if (!job) {
+        console.error("Job is undefined in failed handler");
+        return;
+    }
+    const totalRetries = (_a = job === null || job === void 0 ? void 0 : job.opts.attempts) !== null && _a !== void 0 ? _a : 1;
+    const attemptsMade = (_b = job === null || job === void 0 ? void 0 : job.attemptsMade) !== null && _b !== void 0 ? _b : 0;
+    const retriesLeft = totalRetries - attemptsMade;
+    if (retriesLeft > 0) {
+        console.log(`Job ${job.id} failed but will be retried. Attempts made: ${attemptsMade}`);
+        return;
+    }
     const { portfolioId, resumeUrl } = job === null || job === void 0 ? void 0 : job.data;
     //cleanup
     yield Promise.all([
