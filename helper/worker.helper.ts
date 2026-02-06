@@ -70,13 +70,14 @@ export const handleProcessingResume = async (resumeUrl: string) => {
 
 async function generateData(resumeData: string) {
   const prompt = PromptTemplate.fromTemplate(`
-You are an intelligent resume parser.
+You are an expert resume parser. Your job is to extract structured data from the provided resume text.
 
-Rules:
-- If input is NOT a resume, return empty object
-- Missing fields → omit them
-- Arrays → []
-- Use "create: []" only at top-level relations
+CRITICAL INSTRUCTIONS:
+- **Extract EVERYTHING**: If information is present in the text, it MUST be included in the output.
+- **No False Nulls**: Do not return null for fields that have data in the resume.
+- **Smart Inference**: Identify sections like "Work History", "Professional Experience" as 'experience', and "Academic Background" as 'education'.
+- **Contact Info**: Aggressively search for email, phone, LinkedIn, and GitHub links.
+- **Lists**: Populate arrays (skills, achievements) fully.
 
 Resume Text:
 {resumeData}
