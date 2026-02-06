@@ -4,12 +4,21 @@ import { handleAddJob } from "./controller/job.controller";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import "./controller/worker.controller";
+import { prisma } from "./config/prism.config";
 
 const app = new Hono();
 app.use(logger());
 app.get("/", (c: Context) => c.text("Hello from Resumify worker node!"));
 
 app.get("/fetch", async (c: Context) => {
+  try{
+    //to keep supabase active and check db connection
+    await prisma.portfolio.findUnique({ where: { id: "03986ebc-96b8-44d4-a801-6685fc4498d2" } });
+  }catch(error){
+    if(error instanceof Error){
+      console.error("Error fetching data: ", error.message);
+    }
+  }
   return c.text("Hello from Resumify worker node!", 200);
 });
 
