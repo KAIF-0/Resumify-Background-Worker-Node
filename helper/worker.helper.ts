@@ -7,6 +7,7 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { model } from "../config/gemini.config";
+import { PortfolioDataSchema } from "../utils/types";
 
 export const insertProfileData = async (
   portfolioData: PortfolioData,
@@ -86,7 +87,9 @@ Now output should be only in portfolioData JSON object format.
  
     `);
 
-  const chain = RunnableSequence.from([prompt, model]);
+  const structuredModel = model.withStructuredOutput(PortfolioDataSchema);  
+
+  const chain = RunnableSequence.from([prompt, structuredModel]);
 
   const response = (
     await chain.invoke({
@@ -98,9 +101,9 @@ Now output should be only in portfolioData JSON object format.
   // console.log(response);
 
   //cleaning unstructured data
-  const cleanedData = cleanPortfolioData(response);
+  // const cleanedData = cleanPortfolioData(response);
 
-  return cleanedData;
+  return response;
 }
 
 async function downloadResume(resumeUrl: string, localPath: string) {
