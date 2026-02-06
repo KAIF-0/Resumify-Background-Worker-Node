@@ -7,7 +7,6 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { model } from "../config/gemini.config";
-import { z } from "zod";
 
 export const insertProfileData = async (
   portfolioData: PortfolioData,
@@ -70,31 +69,39 @@ export const handleProcessingResume = async (resumeUrl: string) => {
 
 async function generateData(resumeData: string) {
   const prompt = PromptTemplate.fromTemplate(`
-You are an expert resume parser. Your job is to extract structured data from the provided resume text.
+    You are an intelligent parser that extracts structured portfolio information from resume text. The input will be the full extracted text from a resume (in plain text). Your goal is to return a valid JavaScript object named "portfolioData" with the following structure.
 
-CRITICAL INSTRUCTIONS:
-- **Extract EVERYTHING**: If information is present in the text, it MUST be included in the output.
-- **No False Nulls**: Do not return null for fields that have data in the resume.
-- **Smart Inference**: Identify sections like "Work History", "Professional Experience" as 'experience', and "Academic Background" as 'education'.
-- **Contact Info**: Aggressively search for email, phone, LinkedIn, and GitHub links.
-- **Lists**: Populate arrays (skills, achievements) fully.
+If the input is not a resume (e.g., a blog post, essay, or random notes), respond with: "null"
 
-Resume Text:
-{resumeData}
-`); 
+If any field is missing, set its value to "null". For arrays, set them to empty arrays (e.g., []). For nested relational fields like experience, projects, skills, and education, use create: [] in curly brackets only at the top level (not inside each item).
 
-  const structuredModel = model.withStructuredOutput(PortfolioSchema as any)
 
-  const chain = RunnableSequence.from([prompt, structuredModel]);
+🧾 Format:
 
-  const response = await chain.invoke({
-    resumeData,
-  });
-  // console.log("Structured Response: ", response);
-  // response is already a JS object
-  return response as PortfolioData;
+portfolioData = {portfolioData}
+
+INPUT TEXT: {resumeData}
+
+Now output should be only in portfolioData JSON object format.
+ 
+    `);
+
+  const chain = RunnableSequence.from([prompt, model]);
+
+  const response = (
+    await chain.invoke({
+      resumeData,
+      portfolioData,
+    })
+  ).text;
+
+  // console.log(response);
+
+  //cleaning unstructured data
+  const cleanedData = cleanPortfolioData(response);
+
+  return cleanedData;
 }
-
 
 async function downloadResume(resumeUrl: string, localPath: string) {
   const res = await fetch(resumeUrl);
@@ -189,62 +196,80 @@ export const handleProcessingFail = async (portfolioId: string) => {
   }
 };
 
-export const PortfolioSchema = z.object({
-  name: z.string().optional().describe("Name of the person"),
-  title: z.string().optional().describe("Job title or professional headline"),
-  photo: z.string().url().optional().describe("URL to the photo"),
-  summary: z.string().optional().describe("Professional summary"),
-
-  email: z.string().email().optional().describe("Email address"),
-  github: z.string().url().optional().describe("GitHub profile URL"),
-  linkedIn: z.string().url().optional().describe("LinkedIn profile URL"),
-  phone: z.string().optional().describe("Phone number"),
-  location: z.string().optional().describe("Location"),
-
-  softSkills: z.array(z.string()).describe("List of soft skills"),
-  achievements: z.array(z.string()).describe("List of achievements"),
-
-  experience: z.object({
-    create: z.array(
-      z.object({
-        company: z.string().optional(),
-        role: z.string().optional(),
-        startDate: z.string().optional(),
-        endDate: z.string().optional(),
-        description: z.string().optional(),
-      })
-    ),
-  }),
-
-  projects: z.object({
-    create: z.array(
-      z.object({
-        name: z.string().optional(),
-        description: z.string().optional(),
-        technologies: z.array(z.string()),
-        link: z.string().url().optional(),
-        github: z.string().url().optional(),
-      })
-    ),
-  }),
-
-  skills: z.object({
-    create: z.array(
-      z.object({
-        name: z.string().optional(),
-        skills: z.array(z.string()),
-      })
-    ),
-  }),
-
-  education: z.object({
-    create: z.array(
-      z.object({
-        institution: z.string().optional(),
-        degree: z.string().optional(),
-        year: z.string().optional(),
-      })
-    ),
-  }),
-});
-
+const portfolioData = {
+  name: "John Doe",
+  title: "Full Stack Developer",
+  photo: "https://example.com/photo.jpg",
+  summary:
+    "Creative and detail-oriented developer with 5+ years of experience in building scalable web applications.",
+  email: "john.doe@example.com",
+  github: "https://github.com/johndoe",
+  linkedIn: "https://www.linkedin.com/in/kaif-khan-47bb19292",
+  phone: "+1 123 456 7890",
+  location: "San Francisco, CA",
+  softSkills: ["Teamwork", "Problem Solving", "Communication"],
+  achievements: [
+    "Complete Full Stack Web Developemnt from Physics Wallah",
+    "Organized, Volunteered and Participated in 3+ Hackathon",
+  ],
+  experience: {
+    create: [
+      {
+        company: "Google",
+        role: "Software Engineer",
+        startDate: "2019-01-01",
+        endDate: "2022-12-31",
+        description:
+          "Worked on scalable systems and internal tools for Google Cloud Platform.",
+      },
+      {
+        company: "StartupX",
+        role: "Frontend Developer",
+        startDate: "2017-06-01",
+        endDate: "2018-12-31",
+        description:
+          "Built and maintained responsive user interfaces using React.",
+      },
+    ],
+  },
+  projects: {
+    create: [
+      {
+        name: "AI Chatbot",
+        description:
+          "A GPT-powered customer support chatbot integrated into websites.",
+        technologies: ["React", "Node.js", "OpenAI API"],
+        link: "https://aichatbot.example.com",
+        github: "https://github.com/johndoe/aichatbot",
+      },
+      {
+        name: "Portfolio Generator",
+        description: "App to generate developer portfolios from resumes.",
+        technologies: ["Next.js", "Tailwind", "Prisma"],
+        link: "https://portfolio-gen.example.com",
+        github: "https://github.com/johndoe/portfolio-gen",
+      },
+    ],
+  },
+  skills: {
+    create: [
+      {
+        name: "Frontend",
+        skills: ["React", "Next.js", "Tailwind CSS", "Framer Motion"],
+      },
+      {
+        name: "Backend",
+        skills: ["Node.js", "Express", "Prisma", "PostgreSQL"],
+      },
+    ],
+  },
+  education: {
+    create: [
+      {
+        institution: "MIT",
+        degree: "B.Tech in Computer Science",
+        year: "2017",
+      },
+    ],
+  },
+};
