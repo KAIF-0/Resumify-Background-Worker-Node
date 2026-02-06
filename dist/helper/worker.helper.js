@@ -84,8 +84,8 @@ function generateData(resumeData) {
 You are an intelligent resume parser.
 
 Rules:
-- If input is NOT a resume, return null
-- Missing fields → null
+- If input is NOT a resume, return empty object
+- Missing fields → omit them
 - Arrays → []
 - Use "create: []" only at top-level relations
 
@@ -194,46 +194,46 @@ const handleProcessingFail = (portfolioId) => __awaiter(void 0, void 0, void 0, 
 });
 exports.handleProcessingFail = handleProcessingFail;
 exports.PortfolioSchema = zod_1.z.object({
-    name: zod_1.z.string().nullable(),
-    title: zod_1.z.string().nullable(),
-    photo: zod_1.z.string().url().nullable(),
-    summary: zod_1.z.string().nullable(),
-    email: zod_1.z.string().email().nullable(),
-    github: zod_1.z.string().url().nullable(),
-    linkedIn: zod_1.z.string().url().nullable(),
-    phone: zod_1.z.string().nullable(),
-    location: zod_1.z.string().nullable(),
-    softSkills: zod_1.z.array(zod_1.z.string()),
-    achievements: zod_1.z.array(zod_1.z.string()),
+    name: zod_1.z.string().optional().describe("Name of the person"),
+    title: zod_1.z.string().optional().describe("Job title or professional headline"),
+    photo: zod_1.z.string().url().optional().describe("URL to the photo"),
+    summary: zod_1.z.string().optional().describe("Professional summary"),
+    email: zod_1.z.string().email().optional().describe("Email address"),
+    github: zod_1.z.string().url().optional().describe("GitHub profile URL"),
+    linkedIn: zod_1.z.string().url().optional().describe("LinkedIn profile URL"),
+    phone: zod_1.z.string().optional().describe("Phone number"),
+    location: zod_1.z.string().optional().describe("Location"),
+    softSkills: zod_1.z.array(zod_1.z.string()).describe("List of soft skills"),
+    achievements: zod_1.z.array(zod_1.z.string()).describe("List of achievements"),
     experience: zod_1.z.object({
         create: zod_1.z.array(zod_1.z.object({
-            company: zod_1.z.string().nullable(),
-            role: zod_1.z.string().nullable(),
-            startDate: zod_1.z.string().nullable(),
-            endDate: zod_1.z.string().nullable(),
-            description: zod_1.z.string().nullable(),
+            company: zod_1.z.string().optional(),
+            role: zod_1.z.string().optional(),
+            startDate: zod_1.z.string().optional(),
+            endDate: zod_1.z.string().optional(),
+            description: zod_1.z.string().optional(),
         })),
     }),
     projects: zod_1.z.object({
         create: zod_1.z.array(zod_1.z.object({
-            name: zod_1.z.string().nullable(),
-            description: zod_1.z.string().nullable(),
+            name: zod_1.z.string().optional(),
+            description: zod_1.z.string().optional(),
             technologies: zod_1.z.array(zod_1.z.string()),
-            link: zod_1.z.string().url().nullable(),
-            github: zod_1.z.string().url().nullable(),
+            link: zod_1.z.string().url().optional(),
+            github: zod_1.z.string().url().optional(),
         })),
     }),
     skills: zod_1.z.object({
         create: zod_1.z.array(zod_1.z.object({
-            name: zod_1.z.string().nullable(),
+            name: zod_1.z.string().optional(),
             skills: zod_1.z.array(zod_1.z.string()),
         })),
     }),
     education: zod_1.z.object({
         create: zod_1.z.array(zod_1.z.object({
-            institution: zod_1.z.string().nullable(),
-            degree: zod_1.z.string().nullable(),
-            year: zod_1.z.string().nullable(),
+            institution: zod_1.z.string().optional(),
+            degree: zod_1.z.string().optional(),
+            year: zod_1.z.string().optional(),
         })),
     }),
 });

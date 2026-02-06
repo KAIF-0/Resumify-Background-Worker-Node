@@ -73,8 +73,8 @@ async function generateData(resumeData: string) {
 You are an intelligent resume parser.
 
 Rules:
-- If input is NOT a resume, return null
-- Missing fields → null
+- If input is NOT a resume, return empty object
+- Missing fields → omit them
 - Arrays → []
 - Use "create: []" only at top-level relations
 
@@ -189,28 +189,28 @@ export const handleProcessingFail = async (portfolioId: string) => {
 };
 
 export const PortfolioSchema = z.object({
-  name: z.string().nullable(),
-  title: z.string().nullable(),
-  photo: z.string().url().nullable(),
-  summary: z.string().nullable(),
+  name: z.string().optional().describe("Name of the person"),
+  title: z.string().optional().describe("Job title or professional headline"),
+  photo: z.string().url().optional().describe("URL to the photo"),
+  summary: z.string().optional().describe("Professional summary"),
 
-  email: z.string().email().nullable(),
-  github: z.string().url().nullable(),
-  linkedIn: z.string().url().nullable(),
-  phone: z.string().nullable(),
-  location: z.string().nullable(),
+  email: z.string().email().optional().describe("Email address"),
+  github: z.string().url().optional().describe("GitHub profile URL"),
+  linkedIn: z.string().url().optional().describe("LinkedIn profile URL"),
+  phone: z.string().optional().describe("Phone number"),
+  location: z.string().optional().describe("Location"),
 
-  softSkills: z.array(z.string()),
-  achievements: z.array(z.string()),
+  softSkills: z.array(z.string()).describe("List of soft skills"),
+  achievements: z.array(z.string()).describe("List of achievements"),
 
   experience: z.object({
     create: z.array(
       z.object({
-        company: z.string().nullable(),
-        role: z.string().nullable(),
-        startDate: z.string().nullable(),
-        endDate: z.string().nullable(),
-        description: z.string().nullable(),
+        company: z.string().optional(),
+        role: z.string().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        description: z.string().optional(),
       })
     ),
   }),
@@ -218,11 +218,11 @@ export const PortfolioSchema = z.object({
   projects: z.object({
     create: z.array(
       z.object({
-        name: z.string().nullable(),
-        description: z.string().nullable(),
+        name: z.string().optional(),
+        description: z.string().optional(),
         technologies: z.array(z.string()),
-        link: z.string().url().nullable(),
-        github: z.string().url().nullable(),
+        link: z.string().url().optional(),
+        github: z.string().url().optional(),
       })
     ),
   }),
@@ -230,7 +230,7 @@ export const PortfolioSchema = z.object({
   skills: z.object({
     create: z.array(
       z.object({
-        name: z.string().nullable(),
+        name: z.string().optional(),
         skills: z.array(z.string()),
       })
     ),
@@ -239,9 +239,9 @@ export const PortfolioSchema = z.object({
   education: z.object({
     create: z.array(
       z.object({
-        institution: z.string().nullable(),
-        degree: z.string().nullable(),
-        year: z.string().nullable(),
+        institution: z.string().optional(),
+        degree: z.string().optional(),
+        year: z.string().optional(),
       })
     ),
   }),
