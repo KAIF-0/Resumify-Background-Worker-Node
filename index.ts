@@ -3,11 +3,22 @@ import { Context, Hono } from "hono";
 import { handleAddJob } from "./controller/job.controller";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
+import { cors } from "hono/cors";
 import "./controller/worker.controller";
 import { prisma } from "./config/prism.config";
 
 const app = new Hono();
 app.use(logger());
+app.use(
+  "*",
+  cors({
+    origin: "*", 
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+
 app.get("/", (c: Context) => c.text("Hello from Resumify worker node!"));
 
 app.get("/fetch", async (c: Context) => {
