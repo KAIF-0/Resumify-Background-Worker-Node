@@ -11,17 +11,17 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handleAddJob = void 0;
 const http_exception_1 = require("hono/http-exception");
-const redis_queue_1 = require("../config/redis.queue");
+const process_queue_1 = require("../config/process.queue");
 const handleAddJob = (c) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { portfolioId, key } = yield c.req.json();
+        const { portfolioId, key, resumeUrl } = yield c.req.json();
         console.log(portfolioId, key);
-        const job = yield redis_queue_1.processQueue.getJob(key);
+        const job = yield process_queue_1.processQueue.hasJob(key);
         if (!job) {
-            yield redis_queue_1.processQueue.add("processResumeJob", { portfolioId, key }, {
-                jobId: key,
-                removeOnComplete: true,
-                removeOnFail: true,
+            yield process_queue_1.processQueue.add({
+                portfolioId,
+                key,
+                resumeUrl,
                 attempts: 3,
                 backoff: 5000,
             });

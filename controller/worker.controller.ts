@@ -1,5 +1,4 @@
-import { Job, Worker } from "bullmq";
-import { config } from "dotenv";
+import { Channel, ConsumeMessage } from "amqplib";
 import {
   deleteResume,
   handleProcessingFail,
@@ -7,72 +6,105 @@ import {
   insertProfileData,
   updatePortfolioStatus,
 } from "../helper/worker.helper";
-config();
+import {
+  processQueue,
+  ProcessResumeJobPayload,
+  PROCESS_QUEUE_NAME,
+} from "../config/process.queue";
+import { rabbitMQClient } from "../config/rabbitmq.config";
 
-export const worker = new Worker(
-  "processQueue",
-  async (job: Job) => {
-    const { portfolioId, key, resumeUrl } = job.data;
+class ResumeWorker {
+  public async start() {
+    await processQueue.initialize();
+    const consumerChannel = await rabbitMQClient.createConsumerChannel(5);
+
+    await consumerChannel.assertQueue(PROCESS_QUEUE_NAME, { durable: true });
+    await consumerChannel.consume(PROCESS_QUEUE_NAME, async (message) => {
+      await this.handleMessage(message, consumerChannel);
+    });
+  }
+
+  private async handleMessage(message: ConsumeMessage | null, consumerChannel: Channel) {
+    if (!message) return;
+
+    const payload = JSON.parse(
+      message.content.toString()
+    ) as ProcessResumeJobPayload;
+
+    const { portfolioId, key, resumeUrl } = payload;
 
     try {
       console.log("JOB DATA: ", portfolioId, resumeUrl);
-      const generatedPortfolioData = await handleProcessingResume(resumeUrl);
+      const generatedPortfolioData = await handleProcessingResume(resumeUrl as string);
       await insertProfileData(generatedPortfolioData, portfolioId);
+
+      await this.handleCompleted(payload);
+      processQueue.releaseJobKey(key);
+      consumerChannel.ack(message);
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Error processing job for key ${key}: ${error.message}`);
-        throw error;
       }
-    }
-  },
-  {
-    connection: {
-      url: process.env.REDIS_INSTANCE_URL,
-    },
-    concurrency: 5,
-  }
-);
 
-worker.on("completed", async (job: Job) => {
-  try {
-    const { portfolioId, key, resumeUrl } = job.data;
+      const totalRetries = payload.attempts ?? 3;
+      const attemptsMade = (payload.attemptsMade ?? 0) + 1;
+      const retriesLeft = totalRetries - attemptsMade;
+
+      if (retriesLeft > 0) {
+        console.log(
+          `Job ${key} failed but will be retried. Attempts made: ${attemptsMade}`
+        );
+        consumerChannel.ack(message);
+        await processQueue.publish(
+          {
+            ...payload,
+            attemptsMade,
+          },
+          payload.backoff ?? 5000
+        );
+        return;
+      }
+
+      await this.handleFailed(payload);
+      processQueue.releaseJobKey(key);
+      consumerChannel.ack(message);
+    }
+  }
+
+  private async handleCompleted(payload: ProcessResumeJobPayload) {
+    try {
+      const { portfolioId, resumeUrl, key } = payload;
     await updatePortfolioStatus(portfolioId);
 
-    //coolodown halt
-    await new Promise((resolve) => setTimeout(resolve, 5000));
-    await deleteResume(resumeUrl);
-    console.log(`Job ${job?.id} completed successfully`);
-  } catch (error) {
-    console.log("Resume Processing Job Success handling failed!");
+      //coolodown halt
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await deleteResume(resumeUrl as string);
+      console.log(`Job ${key} completed successfully`);
+    } catch (error) {
+      console.log("Resume Processing Job Success handling failed!");
+    }
   }
-});
 
-worker.on("failed", async (job: Job | undefined, err: Error) => {
-  if (!job) {
-    console.error("Job is undefined in failed handler");
-    return;
-  }
-  const totalRetries = job?.opts.attempts ?? 1;
-  const attemptsMade = job?.attemptsMade ?? 0;
-  const retriesLeft = totalRetries - attemptsMade;
-  if (retriesLeft > 0) {
-    console.log(`Job ${job.id} failed but will be retried. Attempts made: ${attemptsMade}`);
-    return;
-  }
-  const { portfolioId, resumeUrl } = job?.data;
+  private async handleFailed(payload: ProcessResumeJobPayload) {
+    const { portfolioId, resumeUrl } = payload;
 
-  //cleanup
-  await Promise.all([
-    deleteResume(resumeUrl),
-    handleProcessingFail(portfolioId),
-  ])
-    .then(() => {
-      console.log(`Resume Processing Job failure handling successfull!`);
-    })
-    .catch((error) => {
-      console.log(
-        `Resume Processing Job failure handling failed: `,
-        error.message
-      );
-    });
+    await Promise.all([
+      deleteResume(resumeUrl as string),
+      handleProcessingFail(portfolioId),
+    ])
+      .then(() => {
+        console.log(`Resume Processing Job failure handling successfull!`);
+      })
+      .catch((error) => {
+        console.log(
+          `Resume Processing Job failure handling failed: `,
+          error.message
+        );
+      });
+  }
+}
+
+export const worker = new ResumeWorker();
+worker.start().catch((error) => {
+  console.error("Failed to start worker:", error.message);
 });

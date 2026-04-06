@@ -10,65 +10,86 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.worker = void 0;
-const bullmq_1 = require("bullmq");
-const dotenv_1 = require("dotenv");
 const worker_helper_1 = require("../helper/worker.helper");
-(0, dotenv_1.config)();
-exports.worker = new bullmq_1.Worker("processQueue", (job) => __awaiter(void 0, void 0, void 0, function* () {
-    const { portfolioId, key, resumeUrl } = job.data;
-    try {
-        console.log("JOB DATA: ", portfolioId, resumeUrl);
-        const generatedPortfolioData = yield (0, worker_helper_1.handleProcessingResume)(resumeUrl);
-        yield (0, worker_helper_1.insertProfileData)(generatedPortfolioData, portfolioId);
+const process_queue_1 = require("../config/process.queue");
+const rabbitmq_config_1 = require("../config/rabbitmq.config");
+class ResumeWorker {
+    start() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield process_queue_1.processQueue.initialize();
+            const consumerChannel = yield rabbitmq_config_1.rabbitMQClient.createConsumerChannel(5);
+            yield consumerChannel.assertQueue(process_queue_1.PROCESS_QUEUE_NAME, { durable: true });
+            yield consumerChannel.consume(process_queue_1.PROCESS_QUEUE_NAME, (message) => __awaiter(this, void 0, void 0, function* () {
+                yield this.handleMessage(message, consumerChannel);
+            }));
+        });
     }
-    catch (error) {
-        if (error instanceof Error) {
-            console.error(`Error processing job for key ${key}: ${error.message}`);
-            throw error;
-        }
+    handleMessage(message, consumerChannel) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
+            if (!message)
+                return;
+            const payload = JSON.parse(message.content.toString());
+            const { portfolioId, key, resumeUrl } = payload;
+            try {
+                console.log("JOB DATA: ", portfolioId, resumeUrl);
+                const generatedPortfolioData = yield (0, worker_helper_1.handleProcessingResume)(resumeUrl);
+                yield (0, worker_helper_1.insertProfileData)(generatedPortfolioData, portfolioId);
+                yield this.handleCompleted(payload);
+                process_queue_1.processQueue.releaseJobKey(key);
+                consumerChannel.ack(message);
+            }
+            catch (error) {
+                if (error instanceof Error) {
+                    console.error(`Error processing job for key ${key}: ${error.message}`);
+                }
+                const totalRetries = (_a = payload.attempts) !== null && _a !== void 0 ? _a : 3;
+                const attemptsMade = ((_b = payload.attemptsMade) !== null && _b !== void 0 ? _b : 0) + 1;
+                const retriesLeft = totalRetries - attemptsMade;
+                if (retriesLeft > 0) {
+                    console.log(`Job ${key} failed but will be retried. Attempts made: ${attemptsMade}`);
+                    consumerChannel.ack(message);
+                    yield process_queue_1.processQueue.publish(Object.assign(Object.assign({}, payload), { attemptsMade }), (_c = payload.backoff) !== null && _c !== void 0 ? _c : 5000);
+                    return;
+                }
+                yield this.handleFailed(payload);
+                process_queue_1.processQueue.releaseJobKey(key);
+                consumerChannel.ack(message);
+            }
+        });
     }
-}), {
-    connection: {
-        url: process.env.REDIS_INSTANCE_URL,
-    },
-    concurrency: 5,
+    handleCompleted(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const { portfolioId, resumeUrl, key } = payload;
+                yield (0, worker_helper_1.updatePortfolioStatus)(portfolioId);
+                //coolodown halt
+                yield new Promise((resolve) => setTimeout(resolve, 5000));
+                yield (0, worker_helper_1.deleteResume)(resumeUrl);
+                console.log(`Job ${key} completed successfully`);
+            }
+            catch (error) {
+                console.log("Resume Processing Job Success handling failed!");
+            }
+        });
+    }
+    handleFailed(payload) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { portfolioId, resumeUrl } = payload;
+            yield Promise.all([
+                (0, worker_helper_1.deleteResume)(resumeUrl),
+                (0, worker_helper_1.handleProcessingFail)(portfolioId),
+            ])
+                .then(() => {
+                console.log(`Resume Processing Job failure handling successfull!`);
+            })
+                .catch((error) => {
+                console.log(`Resume Processing Job failure handling failed: `, error.message);
+            });
+        });
+    }
+}
+exports.worker = new ResumeWorker();
+exports.worker.start().catch((error) => {
+    console.error("Failed to start worker:", error.message);
 });
-exports.worker.on("completed", (job) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { portfolioId, key, resumeUrl } = job.data;
-        yield (0, worker_helper_1.updatePortfolioStatus)(portfolioId);
-        //coolodown halt
-        yield new Promise((resolve) => setTimeout(resolve, 5000));
-        yield (0, worker_helper_1.deleteResume)(resumeUrl);
-        console.log(`Job ${job === null || job === void 0 ? void 0 : job.id} completed successfully`);
-    }
-    catch (error) {
-        console.log("Resume Processing Job Success handling failed!");
-    }
-}));
-exports.worker.on("failed", (job, err) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
-    if (!job) {
-        console.error("Job is undefined in failed handler");
-        return;
-    }
-    const totalRetries = (_a = job === null || job === void 0 ? void 0 : job.opts.attempts) !== null && _a !== void 0 ? _a : 1;
-    const attemptsMade = (_b = job === null || job === void 0 ? void 0 : job.attemptsMade) !== null && _b !== void 0 ? _b : 0;
-    const retriesLeft = totalRetries - attemptsMade;
-    if (retriesLeft > 0) {
-        console.log(`Job ${job.id} failed but will be retried. Attempts made: ${attemptsMade}`);
-        return;
-    }
-    const { portfolioId, resumeUrl } = job === null || job === void 0 ? void 0 : job.data;
-    //cleanup
-    yield Promise.all([
-        (0, worker_helper_1.deleteResume)(resumeUrl),
-        (0, worker_helper_1.handleProcessingFail)(portfolioId),
-    ])
-        .then(() => {
-        console.log(`Resume Processing Job failure handling successfull!`);
-    })
-        .catch((error) => {
-        console.log(`Resume Processing Job failure handling failed: `, error.message);
-    });
-}));

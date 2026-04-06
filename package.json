@@ -27,7 +27,8 @@
     "@langchain/core": "^0.3.62",
     "@langchain/google-genai": "^0.2.14",
     "@prisma/client": "^6.11.1",
-    "bullmq": "^5.56.3",
+    "@types/amqplib": "^0.10.8",
+    "amqplib": "^1.0.3",
     "dotenv": "^16.6.1",
     "hono": "^4.8.4",
     "pdf-parse": "^1.1.1"
