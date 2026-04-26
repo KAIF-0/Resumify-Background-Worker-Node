@@ -4,8 +4,11 @@ import { handleAddJob } from "./controller/job.controller";
 import { HTTPException } from "hono/http-exception";
 import { logger } from "hono/logger";
 import { cors } from "hono/cors";
+import { config } from "dotenv";
 import "./controller/worker.controller";
 import { prisma } from "./config/prism.config";
+
+config();
 
 const app = new Hono();
 app.use(logger());
@@ -47,7 +50,9 @@ app.notFound((c: Context) => {
   return c.text("Page not found!", 404);
 });
 
+const port = process.env.PORT ? Number(process.env.PORT) : 8000;
+
 serve({
-  port: 8000,
+  port,
   fetch: app.fetch,
 });

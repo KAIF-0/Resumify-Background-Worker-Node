@@ -14,10 +14,18 @@ const hono_1 = require("hono");
 const job_controller_1 = require("./controller/job.controller");
 const http_exception_1 = require("hono/http-exception");
 const logger_1 = require("hono/logger");
+const cors_1 = require("hono/cors");
+const dotenv_1 = require("dotenv");
 require("./controller/worker.controller");
 const prism_config_1 = require("./config/prism.config");
+(0, dotenv_1.config)();
 const app = new hono_1.Hono();
 app.use((0, logger_1.logger)());
+app.use("*", (0, cors_1.cors)({
+    origin: "*",
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+}));
 app.get("/", (c) => c.text("Hello from Resumify worker node!"));
 app.get("/fetch", (c) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -42,7 +50,8 @@ app.onError((err, c) => {
 app.notFound((c) => {
     return c.text("Page not found!", 404);
 });
+const port = process.env.PORT ? Number(process.env.PORT) : 8000;
 (0, node_server_1.serve)({
-    port: 8000,
+    port,
     fetch: app.fetch,
 });
